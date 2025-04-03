@@ -23,9 +23,6 @@ while True:
         print("Failed to read from camera")
         break  # Avoid using exit() inside the loop
 
-    # Gray img
-    gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-
     # Apply screen mirroring (flip horizontally)
     mirrored_img = cv2.flip(img, 1)
 
@@ -34,16 +31,19 @@ while True:
     # Largest face first
     faces = sorted(faces, key=lambda x: x[2] * x[3])
 
+    # if face detected
     if (len(faces)>0):
         x, y, w, h = faces[-1]
         cv2.rectangle(mirrored_img, (x, y), (x + w, y + h), (0, 255, 0), 2)
+        # crop the face pixels from main image
         cropped_face = mirrored_img[y-offset:y+h+offset, x-offset:x+w+offset]
+        # reshape the cropped image
         cropped_face = cv2.resize(cropped_face, (100, 100))
         count += 1
+        # consider after every 10 frames
         if count % 10 ==0:
             faceData.append(cropped_face)
             print("Face Captured: ", len(faceData))
-        # cv2.imshow("Cropped Face", cropped_face)
 
     cv2.imshow("Mirrored Camera Feed", mirrored_img)
 
@@ -51,15 +51,19 @@ while True:
     if cv2.waitKey(1) & 0xFF == ord('q'):  # Press 'q' to exit
         break
 
-
+# convert face data into an numpy array
 faceData = np.asarray(faceData)
 m = faceData.shape[0]
+
+# from 4D make it 2D
 faceData = faceData.reshape((m, -1))
 print(faceData.shape)
 
+# save the data as binary
 file = dataset_path + file_name + ".npy"
 np.save(file,faceData)
 print("Data Successfully saved at "+ file)
 
+# release resources
 cam.release()
 cv2.destroyAllWindows()
